@@ -98,6 +98,15 @@ class InsightsRequest(BaseModel):
     symptoms: list[str] | None = None
 
 
+class InsightsResponse(BaseModel):
+    next_period: str
+    ovulation_day: str
+    fertile_period_start:str
+    fertile_period_end: str
+    symptoms: list[str] | None = None
+     
+
+
 class MessageRequest(BaseModel):
     message: str
 

@@ -16,12 +16,16 @@ import os
 
 load_dotenv()
 
-# Initialize Firebase Admin
-firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS")
-if not firebase_creds_json:
+# Load the path to Firebase credentials from environment
+firebase_creds_path = os.getenv("FIREBASE_CREDENTIALS")
+if not firebase_creds_path:
     raise ValueError("FIREBASE_CREDENTIALS environment variable is not set!")
 
-cred_dict = json.loads(firebase_creds_json)
+# Read the JSON file
+with open(firebase_creds_path, "r") as f:
+    cred_dict = json.load(f)
+
+# Create a Firebase credential object
 cred = credentials.Certificate(cred_dict)
 
 # Initialize Firebase app only once

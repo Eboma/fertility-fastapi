@@ -1,12 +1,12 @@
-from typing import Annotated
+from typing import Annotated, List
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Insights, Users
-from schemas import InsightsRequest
+from schemas import InsightsRequest, InsightsResponse
 from utils.utils import get_current_user
-
+from starlette import status
 from utils.predictions import simple_fertility_ai
 from services.insights_engine import generate_insight_key
 from services.translator import translate_insight
@@ -33,8 +33,15 @@ def str_to_date(date_str: str) -> date:
     return datetime.strptime(date_str, "%Y-%m-%d").date()
 
 
+@router.get("/insights", status_code=status.HTTP_200_OK, response_model=List[InsightsResponse])
+async def get_insights(db: db_dependency,user: user_dependency):
+    user_insights = db.query(Insights).filter(Insights.id == user['id']).all()
+    if  not user_insights:
+        return {"message": "No available insights"}
+    return user_insights
 
-@router.post("/insights")
+
+@router.post("/insights", status_code=status.HTTP_200_OK)
 async def insights(
     data: InsightsRequest,
     db: db_dependency,
