@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 from fastapi import APIRouter, Depends, HTTPException, Body, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -9,15 +10,23 @@ from schemas import CreateUserRequest, Token
 from utils.utils import bcrypt_context, authenticate_user, create_access_token, generate_otp, hash_otp, send_otp_sms, verify_otp_hash
 from fastapi.security import OAuth2PasswordRequestForm
 import firebase_admin
-from firebase_admin import credentials, auth
+from firebase_admin import credentials
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 # Initialize Firebase Admin
-cred = credentials.Certificate("firebase/serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS")
+if not firebase_creds_json:
+    raise ValueError("FIREBASE_CREDENTIALS environment variable is not set!")
+
+cred_dict = json.loads(firebase_creds_json)
+cred = credentials.Certificate(cred_dict)
+
+# Initialize Firebase app only once
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(cred)
 
 router = APIRouter(
     prefix="/auth",
