@@ -15,4 +15,6 @@ __pycache__/
 # IDE files
 .vscode/
 
+# firebase files
+
 firebase/serviceAccountKey.json
