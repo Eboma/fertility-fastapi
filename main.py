@@ -1,10 +1,8 @@
 from fastapi import FastAPI
-from routers import auth, cycles, insights, users,messages
+from routers import auth, cycles, insights, users, messages
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
-
-
 
 
 app = FastAPI()
@@ -13,7 +11,7 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",  # React dev server
     "http://127.0.0.1:3000",
-    "https://teamnexuss.netlify.app/"  # production frontend
+    "https://teamnexuss.netlify.app"  # production frontend
 ]
 
 app.add_middleware(
@@ -26,7 +24,6 @@ app.add_middleware(
 
 
 models.Base.metadata.create_all(bind=engine)
-
 
 
 app.include_router(auth.router)
