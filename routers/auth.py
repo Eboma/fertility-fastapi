@@ -9,7 +9,7 @@ from models import OTP, PendingUser, RoleEnum, Users, LanguageEnum
 from schemas import CreateUserRequest, Token
 from utils.utils import bcrypt_context, authenticate_user, create_access_token, generate_otp, hash_otp,verify_otp_hash,send_otp_email,send_otp_sms
 from fastapi.security import OAuth2PasswordRequestForm
-import firebase_admin
+
 from firebase_admin import credentials
 from dotenv import load_dotenv
 import os
@@ -17,23 +17,6 @@ import os
 load_dotenv()
 
 USE_SMS = os.getenv("USE_SMS", "false").lower() == "true"
-
-# firebase_creds = os.getenv("FIREBASE_CREDENTIALS")
-# if not firebase_creds:
-#     raise ValueError("FIREBASE_CREDENTIALS environment variable is not set!")
-
-# try:
-#     # Try to parse it as JSON directly (Render case)
-#     cred_dict = json.loads(firebase_creds)
-# except json.JSONDecodeError:
-#     # If it fails, treat it as a file path (local dev case)
-#     with open(firebase_creds, "r") as f:
-#         cred_dict = json.load(f)
-
-# cred = credentials.Certificate(cred_dict)
-
-# if not firebase_admin._apps:
-#     firebase_admin.initialize_app(cred)
 
 router = APIRouter(
     prefix="/auth",
@@ -59,6 +42,8 @@ async def send_otp_registration(
     db: db_dependency,
     create_user_request: CreateUserRequest
 ):
+    print("Received send-otp request:", create_user_request.dict())
+
     # Check if email or username already exists
     existing = db.query(Users).filter(
         or_(
@@ -77,19 +62,18 @@ async def send_otp_registration(
     otp_hashed = hash_otp(otp_code)
     expires_at = datetime.utcnow() + timedelta(minutes=5)
 
+    # Create OTP and pending user in DB
     try:
-        # Clear previous OTPs
+        # Clear previous OTPs and pending registrations
         db.query(OTP).filter(
             OTP.phone == create_user_request.phone_number,
             OTP.is_used == False
         ).delete()
-
-        # Clear previous pending registrations
         db.query(PendingUser).filter(
             PendingUser.phone_number == create_user_request.phone_number
         ).delete()
 
-        # Create OTP
+        # OTP record
         otp_record = OTP(
             phone=create_user_request.phone_number,
             otp_hashed=otp_hashed,
@@ -99,7 +83,7 @@ async def send_otp_registration(
         )
         db.add(otp_record)
 
-        # Create pending user
+        # Pending user record
         pending_user = PendingUser(
             phone_number=create_user_request.phone_number,
             email=create_user_request.email,
@@ -117,42 +101,40 @@ async def send_otp_registration(
         db.commit()
         db.refresh(otp_record)
 
-    except Exception:
+    except Exception as e:
         db.rollback()
+        print("[ERROR] DB transaction failed:", repr(e))
         raise HTTPException(
             status_code=500,
-            detail="Failed to send OTP. Please try again."
+            detail="Failed to create OTP and pending user. Please try again."
         )
 
-    # Send OTP (outside transaction)
+    # Send OTP (outside DB transaction)
+    print("USE_SMS:", USE_SMS)
     try:
-        print("USE_SMS:", USE_SMS)  # <-- Add this
-        print("Sending OTP to email:", create_user_request.email)  # <-- Add this
-
-        if not USE_SMS:
-            try:
-              send_otp_email(create_user_request.email, otp_code)  # <-- wrap in try/except
-            except Exception as e:
-              print("[ERROR] send_otp_email exception:", repr(e))  # <-- log full exception
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to send OTP via email"
+        if USE_SMS:
+            print("Sending OTP via SMS to:", create_user_request.phone_number)
+            send_otp_sms(
+                create_user_request.phone_number,
+                f"Your verification code is {otp_code}"
             )
+            print("OTP SMS sent successfully!")
         else:
-         send_otp_sms(create_user_request.phone_number,
-                     f"Your verification code is {otp_code}")
+            print("Sending OTP via email to:", create_user_request.email)
+            send_otp_email(create_user_request.email, otp_code)
+            print("OTP email sent successfully!")
+
     except Exception as e:
-       print(f"[ERROR] Failed to send OTP: {e}")
-       raise HTTPException(
-        status_code=500,
-        detail=f"Failed to send OTP: {str(e)}"
-    )
+        print("[ERROR] Failed to send OTP:", repr(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send OTP. Please check server logs."
+        )
 
     return {
         "message": "OTP sent successfully",
         "verification_id": otp_record.verification_id
     }
-
 
 
 # Step 2: Verify OTP & create user
