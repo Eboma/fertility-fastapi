@@ -28,8 +28,8 @@ SENDGRID_SENDER_NAME = os.getenv("SENDGRID_SENDER_NAME")
 
 
 
-def authenticate_user(username: str, password: str, db):
-    db_user = db.query(Users).filter(Users.username == username).first()
+def authenticate_user(email: str, password: str, db):
+    db_user = db.query(Users).filter(Users.email == email).first()
     if not db_user:
         return False
     if not bcrypt_context.verify(password, db_user.hashed_password):
@@ -37,8 +37,8 @@ def authenticate_user(username: str, password: str, db):
     return db_user
 
 
-def create_access_token(username: str, user_id: int, role: str, expires_delta: timedelta):
-   encode = {'sub': username, 'id': user_id, 'role': role}
+def create_access_token(email: str, user_id: int, role: str, expires_delta: timedelta):
+   encode = {'sub': email, 'id': user_id, 'role': role}
    expires = datetime.now(timezone.utc) + expires_delta
    encode.update({'exp': expires})
    return jwt.encode(encode, os.getenv('SECRET_KEY'), algorithm=os.getenv('ALGORITHM'))
@@ -48,13 +48,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, os.getenv('SECRET_KEY'),
                              algorithms=os.getenv('ALGORITHM'))
-        username: str = payload.get('sub')
+        email: str = payload.get('sub')
         user_id: int = payload.get('id')
         user_role: str = payload.get('role')
-        if username is None or user_id is None:
+        if email is None or user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate user!')
-        return {'username': username, 'id': user_id, 'user_role': user_role}
+        return {'username': email, 'id': user_id, 'user_role': user_role}
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate user!')

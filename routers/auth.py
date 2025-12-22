@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import Annotated
 from database import SessionLocal
 from models import OTP, PendingUser, RoleEnum, Users, LanguageEnum
-from schemas import CreateUserRequest, Token
+from schemas import CreateUserRequest, Token,LoginRequest
 from utils.utils import bcrypt_context, authenticate_user, create_access_token, generate_otp, hash_otp,verify_otp_hash,send_otp_email,send_otp_sms
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -201,10 +201,10 @@ async def verify_otp_registration(
 
 @router.post("/token", response_model=Token)
 async def login_in_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    data: LoginRequest,
     db: Session = Depends(get_db)
 ):
-    user = authenticate_user(form_data.username, form_data.password, db)
+    user = authenticate_user(data.email, data.password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -212,7 +212,7 @@ async def login_in_token(
         )
 
     token = create_access_token(
-        username=user.username,
+        email=user.email,
         user_id=user.id,
         role=user.role,
         expires_delta=timedelta(minutes=20)
