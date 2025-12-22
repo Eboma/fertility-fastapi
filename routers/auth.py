@@ -127,16 +127,15 @@ async def send_otp_registration(
     # Send OTP (outside transaction)
     try:
        if not USE_SMS:
-         send_otp_email(create_user_request.email, otp_code)
+        send_otp_email(create_user_request.email, otp_code)
        else:
-        send_otp_sms(
-            create_user_request.phone_number,
-            f"Your verification code is {otp_code}"
-        )
+        send_otp_sms(create_user_request.phone_number,
+                     f"Your verification code is {otp_code}")
     except Exception as e:
+       print(f"[ERROR] Failed to send OTP: {e}")
        raise HTTPException(
         status_code=500,
-        detail="OTP created but failed to send"
+        detail=f"Failed to send OTP: {str(e)}"
     )
 
     return {
