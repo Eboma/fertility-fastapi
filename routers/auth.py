@@ -5,7 +5,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from typing import Annotated
 from database import SessionLocal
-from models import OTP, PendingUser, Users, LanguageEnum
+from models import OTP, PendingUser, RoleEnum, Users, LanguageEnum
 from schemas import CreateUserRequest, Token
 from utils.utils import bcrypt_context, authenticate_user, create_access_token, generate_otp, hash_otp,verify_otp_hash,send_otp_email,send_otp_sms
 from fastapi.security import OAuth2PasswordRequestForm
@@ -107,8 +107,9 @@ async def send_otp_registration(
             first_name=create_user_request.first_name,
             last_name=create_user_request.last_name,
             hashed_password=bcrypt_context.hash(create_user_request.password),
-            role=create_user_request.role,
-            language_preference=create_user_request.language_preference,
+            role=RoleEnum(create_user_request.role),
+            language_preference=LanguageEnum(
+                create_user_request.language_preference),
             expires_at=expires_at
         )
         db.add(pending_user)
@@ -124,12 +125,18 @@ async def send_otp_registration(
         )
 
     # Send OTP (outside transaction)
-    if not USE_SMS:
-        send_otp_email(create_user_request.email, otp_code)
-    else:
+    try:
+       if not USE_SMS:
+         send_otp_email(create_user_request.email, otp_code)
+       else:
         send_otp_sms(
-        create_user_request.phone_number,
-        f"Your verification code is {otp_code}"
+            create_user_request.phone_number,
+            f"Your verification code is {otp_code}"
+        )
+    except Exception as e:
+       raise HTTPException(
+        status_code=500,
+        detail="OTP created but failed to send"
     )
 
     return {
