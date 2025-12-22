@@ -1,4 +1,6 @@
+import os
 from fastapi import FastAPI
+from sqlalchemy import create_engine, text
 from routers import auth, cycles, insights, users, messages
 from fastapi.middleware.cors import CORSMiddleware
 import models
@@ -36,3 +38,14 @@ app.include_router(messages.router)
 @app.get("/")
 async def root():
     return {"message": "Fertility FastAPI is running!"}
+
+
+@app.get("/run-migration")
+def run_migration():
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    with engine.connect() as conn:
+        conn.execute(text("""
+            ALTER TABLE otp ADD COLUMN verification_id VARCHAR(255) UNIQUE NOT NULL;
+        """))
+        conn.commit()
+    return {"message": "Migration ran successfully!"}
