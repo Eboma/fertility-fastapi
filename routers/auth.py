@@ -201,7 +201,7 @@ async def verify_otp_registration(
 @router.post("/token", response_model=Token)
 async def login_in_token(
     data: LoginRequest,
-    db: Session = Depends(get_db)
+    db: db_dependency
 ):
     user = authenticate_user(data.email, data.password, db)
     if not user:
@@ -227,7 +227,7 @@ async def login_in_token(
 # Forgot Password Logic
 
 @router.post("/forgot_password", status_code=status.HTTP_200_OK)
-async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+async def forgot_password(data: ForgotPasswordRequest, db: db_dependency):
     user = db.query(Users).filter(Users.email == data.email).first()
     if not user:
         raise HTTPException(
@@ -243,7 +243,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get
 
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
-def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+def reset_password(data: ResetPasswordRequest, db: db_dependency):
     reset_record = db.query(PasswordResetToken).filter(
         PasswordResetToken.token == data.token,
         PasswordResetToken.expires_at > datetime.utcnow()

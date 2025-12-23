@@ -41,6 +41,9 @@ class Users(Base):
         "Insights", back_populates="user", uselist=False, cascade="all, delete")
 
 
+
+
+
 # class Users(Base):
 #     __tablename__ = "users"
 
@@ -83,6 +86,8 @@ class Users(Base):
 #         "Insights", back_populates="user", uselist=False, cascade="all, delete"
 #     )
     
+
+
 
 class PendingUser(Base):
     __tablename__ = "pending_users"
