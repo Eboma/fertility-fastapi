@@ -1,16 +1,15 @@
 from datetime import datetime, timedelta
 import json
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Body, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from typing import Annotated
 from database import SessionLocal
-from models import OTP, PendingUser, RoleEnum, Users, LanguageEnum
-from schemas import CreateUserRequest, Token,LoginRequest
-from utils.utils import bcrypt_context, authenticate_user, create_access_token, generate_otp, hash_otp,verify_otp_hash,send_otp_email,send_otp_sms
+from models import OTP, PasswordResetToken, PendingUser, RoleEnum, Users, LanguageEnum
+from schemas import CreateUserRequest, ForgotPasswordRequest, ResetPasswordRequest, Token, LoginRequest
+from utils.utils import bcrypt_context, authenticate_user, create_access_token, generate_otp, hash_otp, send_password_reset_email, verify_otp_hash, send_otp_email, send_otp_sms
 from fastapi.security import OAuth2PasswordRequestForm
-
-from firebase_admin import credentials
 from dotenv import load_dotenv
 import os
 
@@ -145,7 +144,7 @@ async def verify_otp_registration(
     db: db_dependency,
     verification_id: str = Body(...),
     otp_code: str = Body(...),
-   
+
 ):
     # Get the latest OTP for this phone
     otp_record = db.query(OTP).filter(
@@ -176,13 +175,13 @@ async def verify_otp_registration(
             status_code=400, detail="Registration data not found")
 
     # Create user
-   
+
     new_user = Users(
         email=pending_user.email,
         username=pending_user.username,
         first_name=pending_user.first_name,
         last_name=pending_user.last_name,
-        hashed_password= pending_user.hashed_password,
+        hashed_password=pending_user.hashed_password,
         role=pending_user.role,
         phone_number=otp_record.phone,
         is_verified=True,
@@ -210,6 +209,11 @@ async def login_in_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate user!"
         )
+    # if user.provider != "local":
+    #     raise HTTPException(
+    #         status_code=status.HTTP_406_NOT_ACCEPTABLE,
+    #         detail="Use Google or Facebook to sign in"
+    #     )
 
     token = create_access_token(
         email=user.email,
@@ -218,6 +222,51 @@ async def login_in_token(
         expires_delta=timedelta(minutes=20)
     )
     return {"access_token": token, "token_type": "bearer"}
+
+
+# Forgot Password Logic
+
+@router.post("/forgot_password", status_code=status.HTTP_200_OK)
+async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.email == data.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Email not found!")
+    token = str(uuid.uuid4())
+    reset_token = PasswordResetToken(
+        user_id=user.id, token=token, expires_at=datetime.utcnow() + timedelta(minutes=5))
+    db.add(reset_token)
+    db.commit()
+    send_password_reset_email(
+        to_email=user.email, reset_token=reset_token.token)
+    return {"message": "Password reset email sent successfully."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    reset_record = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == data.token,
+        PasswordResetToken.expires_at > datetime.utcnow()
+    ).first()
+
+    if not reset_record:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+
+    user = db.query(Users).filter(Users.id == reset_record.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found!")
+    # if user.provider != "local":
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Password reset not available for social accounts"
+    #     )
+    user.hashed_password = bcrypt_context.hash(data.new_password)
+    db.delete(reset_record)
+    db.commit()
+
+    return {"message": "Password has been reset successfully"}
 
 
 # Logout endpoint (placeholder)

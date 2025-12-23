@@ -48,6 +48,15 @@ class LoginRequest(BaseModel):
         password: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str 
+    new_password: str = Field(..., min_length=8)
+
+
 class CycleRequest(BaseModel):
     last_period_date: date
     cycle_length: int = Field(..., ge=21, le=32)

@@ -6,7 +6,7 @@ from database import Base
 from sqlalchemy import Column, Date, DateTime, Integer, String, Boolean, ForeignKey, JSON, Enum as SQLEnum, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from schemas import Prediction
+
 
 
 
@@ -39,6 +39,49 @@ class Users(Base):
         "Cycles", back_populates="user", uselist=False, cascade="all, delete")
     insights: Mapped["Insights"] = relationship(
         "Insights", back_populates="user", uselist=False, cascade="all, delete")
+
+
+# class Users(Base):
+#     __tablename__ = "users"
+
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+#     email: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+#     username: Mapped[str] = mapped_column(unique=True, nullable=False)
+
+#     first_name: Mapped[str] = mapped_column(nullable=False)
+#     last_name: Mapped[str] = mapped_column(nullable=False)
+
+#     hashed_password: Mapped[str | None] = mapped_column(nullable=True)
+
+#     provider: Mapped[str] = mapped_column(default="local", nullable=False)
+#     provider_id: Mapped[str | None] = mapped_column(unique=True, nullable=True)
+
+#     role: Mapped[RoleEnum] = mapped_column(
+#         SQLEnum(RoleEnum),
+#         default=RoleEnum.USER,
+#         nullable=False
+#     )
+
+#     phone_number: Mapped[str | None] = mapped_column(nullable=True)
+
+#     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+#     language_preference: Mapped[LanguageEnum] = mapped_column(
+#         SQLEnum(LanguageEnum),
+#         default=LanguageEnum.ENGLISH,
+#         nullable=False
+#     )
+
+#     profile = relationship(
+#         "UserProfile", back_populates="user", uselist=False, cascade="all, delete"
+#     )
+#     cycle = relationship(
+#         "Cycles", back_populates="user", uselist=False, cascade="all, delete"
+#     )
+#     insights = relationship(
+#         "Insights", back_populates="user", uselist=False, cascade="all, delete"
+#     )
     
 
 class PendingUser(Base):
@@ -73,6 +116,15 @@ class UserProfile(Base):
     audio_preference: Mapped[Optional[bool]] = mapped_column(Boolean)
 
     user: Mapped["Users"] = relationship("Users", back_populates="profile")
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_token"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    token: Mapped[str] = mapped_column(String, unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 
 class OTP(Base):

@@ -73,14 +73,11 @@ def verify_otp_hash(plain_otp: str, hashed_otp: str) -> bool:
     return bcrypt_context.verify(plain_otp, hashed_otp)
 
 
-#implimenting sendgrid emailing service
+
+#...............implimenting sendgrid emailing service.................#
 
 def send_otp_email(to_email: str, otp_code: str):
-    """
-    Send a 4-digit OTP email via SendGrid.
-    Includes debug prints to avoid HTTP 400 errors.
-    """
-    # Debug: print values
+   
     print(
         f"[DEBUG] From: {SENDGRID_SENDER_EMAIL}, To: {to_email}, OTP: {otp_code}")
 
@@ -115,6 +112,52 @@ def send_otp_email(to_email: str, otp_code: str):
     except Exception as e:
         print(f"SendGrid error: {e}")
         raise e
+
+
+
+
+def send_password_reset_email(to_email: str, reset_token: str):
+   
+    print(
+        f"[DEBUG] Sending password reset email to {to_email}, Token: {reset_token}")
+
+    if not SENDGRID_API_KEY or not SENDGRID_SENDER_EMAIL or not SENDGRID_SENDER_NAME:
+        raise ValueError("SendGrid environment variables not set correctly.")
+    if "@" not in to_email:
+        raise ValueError(f"Invalid recipient email: {to_email}")
+
+   
+    reset_link = f"https://fertipath.onrender.com/reset_password?token={reset_token}"
+    message = Mail(
+        from_email=SENDGRID_SENDER_EMAIL,
+        to_emails=to_email,
+        subject="Reset Your Password",
+        html_content=f"""
+        <div style="font-family: Arial, sans-serif;">
+            <h2>Password Reset Request</h2>
+            <p>Click the link below to reset your password:</p>
+            <a href="{reset_link}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none;">Reset Password</a>
+            <p>This link will expire in 15 minutes.</p>
+            <p>If you did not request a password reset, please ignore this email.</p>
+        </div>
+        """
+    )
+
+    try:
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        print(f"[DEBUG] SendGrid response status: {response.status_code}")
+        if response.status_code not in (200, 202):
+            raise Exception(
+                f"Failed to send password reset email: {response.status_code}, {response.body}")
+        print(f"Password reset email sent successfully to {to_email}")
+    except Exception as e:
+        print(f"SendGrid error: {e}")
+        raise e
+
+
+
+
 
 # implimenting sendgrid emailing service
 
