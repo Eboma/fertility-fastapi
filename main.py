@@ -5,6 +5,9 @@ from routers import auth, cycles, insights, users, messages
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
+from run_migrations import run_migrations
+
+run_migrations()
 
 
 app = FastAPI()

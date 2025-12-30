@@ -21,11 +21,12 @@ class UserVerify(BaseModel):
 
 
 class UpdateUserProfileRequest(BaseModel):
-    age: int
-    cycle_length: int
-    last_period_date: date
+    age: Optional[int] = None
+    cycle_length: Optional[int] = None
+    period_length: Optional[int] = None
+    last_period_date: Optional[date] = None
     ttc_history: Optional[str] = None
-    faith_preference: str
+    faith_preference: Optional[str] = None
     audio_preference: Optional[bool] = None
 
 
@@ -33,6 +34,7 @@ class UserProfileResponse(BaseModel):
     user_id: int
     age: Optional[int] = None
     cycle_length: Optional[int] = None
+    period_length: Optional[int] = None
     last_period_date: Optional[date] = None
     ttc_history: Optional[str] = None
     faith_preference: Optional[str] = None
@@ -44,7 +46,7 @@ class UserProfileResponse(BaseModel):
     
     
 class LoginRequest(BaseModel):
-        email: str
+        email: EmailStr
         password: str
 
 

@@ -80,15 +80,15 @@ async def get_profile(user: user_dependency, db: db_dependency):
     return profile
 
 
-@router.put("/profile", status_code=status.HTTP_200_OK, response_model=UserProfileResponse)
-async def update_profile(update_request:  UpdateUserProfileRequest, user: user_dependency, db: db_dependency):
+@router.patch("/profile", status_code=status.HTTP_200_OK, response_model=UserProfileResponse)
+async def update_profile(update_request:UpdateUserProfileRequest, user: user_dependency, db: db_dependency):
     profile = db.query(UserProfile).filter(UserProfile.user_id == user['id']).first()
     if not profile:
        profile = UserProfile(user_id=user['id'])
        db.add(profile)
        db.commit()
        db.refresh(profile)
-    for key, value in update_request.model_dump(exclude_unset=True).items():
+    for key, value in update_request.model_dump(exclude_unset=True, exclude_none=False).items():
         setattr(profile, key, value)
     db.commit()
     db.refresh(profile)

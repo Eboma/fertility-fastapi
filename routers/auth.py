@@ -200,20 +200,19 @@ async def verify_otp_registration(
 
 @router.post("/token", response_model=Token)
 async def login_in_token(
-    data: LoginRequest,
-    db: db_dependency
+    #data: LoginRequest,
+    db: db_dependency,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+   
 ):
-    user = authenticate_user(data.email, data.password, db)
+    #user = authenticate_user(data.email, data.password, db)
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate user!"
         )
-    # if user.provider != "local":
-    #     raise HTTPException(
-    #         status_code=status.HTTP_406_NOT_ACCEPTABLE,
-    #         detail="Use Google or Facebook to sign in"
-    #     )
+   
 
     token = create_access_token(
         email=user.email,
@@ -257,11 +256,7 @@ def reset_password(data: ResetPasswordRequest, db: db_dependency):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found!")
-    # if user.provider != "local":
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="Password reset not available for social accounts"
-    #     )
+  
     user.hashed_password = bcrypt_context.hash(data.new_password)
     db.delete(reset_record)
     db.commit()
