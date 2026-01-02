@@ -63,14 +63,14 @@ class CycleRequest(BaseModel):
     last_period_date: date
     cycle_length: int = Field(..., ge=21, le=32)
     period_length: int = Field(..., ge=2, le=10)
-    symptoms: List[Symptom] = Field(default_factory=list)
+    symptoms: List[str] = Field(default_factory=list)
 
 
 class CycleResponse(BaseModel):
     last_period_date: date
     cycle_length: int
     period_length: int
-    symptoms: List[Symptom] = Field(default_factory=list)
+    symptoms: List[str] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
