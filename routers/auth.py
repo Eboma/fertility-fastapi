@@ -217,7 +217,7 @@ async def login_in_token(
     token = create_access_token(
         email=user.email,
         user_id=user.id,
-        role=user.role,
+        role=user.role, 
         expires_delta=timedelta(minutes=20)
     )
     return {"access_token": token, "token_type": "bearer"}

@@ -35,9 +35,9 @@ def str_to_date(date_str: str) -> date:
 
 @router.get("/insights", status_code=status.HTTP_200_OK, response_model=List[InsightsResponse])
 async def get_insights(db: db_dependency,user: user_dependency):
-    user_insights = db.query(Insights).filter(Insights.id == user['id']).all()
-    if  not user_insights:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Available Insights")
+    user_insights = (db.query(Insights).filter(
+        Insights.user_id == user['id']).all())
+    
     return user_insights
 
 
