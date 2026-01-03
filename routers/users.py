@@ -73,12 +73,9 @@ async def delete_user(user: user_dependency, db: db_dependency):
 async def get_profile(user: user_dependency, db: db_dependency):
     profile = db.query(UserProfile).filter(UserProfile.user_id == user['id']).first()
     if not profile:
-        profile = UserProfile(user_id=user['id'])
-        db.add(profile)
-        db.commit()
-        db.refresh(profile)
+        return UserProfileResponse(user_id=user["id"])
     return profile
-
+        
 
 @router.patch("/profile", status_code=status.HTTP_200_OK, response_model=UserProfileResponse)
 async def update_profile(update_request:UpdateUserProfileRequest, user: user_dependency, db: db_dependency):
