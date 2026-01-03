@@ -100,11 +100,14 @@ class InsightsRequest(BaseModel):
 
 
 class InsightsResponse(BaseModel):
-    next_period: str
-    ovulation_day: str
-    fertile_period_start:str
-    fertile_period_end: str
+    next_period: date
+    ovulation_day: date
+    fertile_period_start:date
+    fertile_period_end: date
     symptoms: List[str] = Field(default_factory=list)
+
+    class Config:
+       from_attributes = True
      
 
 
