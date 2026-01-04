@@ -31,7 +31,7 @@ class UpdateUserProfileRequest(BaseModel):
 
 
 class UserProfileResponse(BaseModel):
-    user_id: int
+    user_id: Optional[int] = None
     age: Optional[int] = None
     cycle_length: Optional[int] = None
     period_length: Optional[int] = None

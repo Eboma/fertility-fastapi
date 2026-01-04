@@ -73,7 +73,11 @@ async def delete_user(user: user_dependency, db: db_dependency):
 async def get_profile(user: user_dependency, db: db_dependency):
     profile = db.query(UserProfile).filter(UserProfile.user_id == user['id']).first()
     if not profile:
-        return UserProfileResponse(user_id=user["id"])
+        profile = UserProfile(user_id=user["id"])
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+        
     return profile
         
 
@@ -85,7 +89,8 @@ async def update_profile(update_request:UpdateUserProfileRequest, user: user_dep
        db.add(profile)
        db.commit()
        db.refresh(profile)
-    for key, value in update_request.model_dump(exclude_unset=True, exclude_none=False).items():
+    update_data = update_request.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
         setattr(profile, key, value)
     db.commit()
     db.refresh(profile)

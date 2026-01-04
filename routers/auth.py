@@ -200,13 +200,13 @@ async def verify_otp_registration(
 
 @router.post("/token", response_model=Token)
 async def login_in_token(
-    data: LoginRequest,
+    # data: LoginRequest,
     db: db_dependency,
-    # form_data: OAuth2PasswordRequestForm = Depends(),
+    form_data: OAuth2PasswordRequestForm = Depends(),
    
 ):
-    user = authenticate_user(data.email, data.password, db)
-    # user = authenticate_user(form_data.username, form_data.password, db)
+    # user = authenticate_user(data.email, data.password, db)
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
