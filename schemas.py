@@ -105,6 +105,7 @@ class InsightsResponse(BaseModel):
     fertile_period_start:date
     fertile_period_end: date
     symptoms: List[str] = Field(default_factory=list)
+    insight_text:str
 
     class Config:
        from_attributes = True
