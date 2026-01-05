@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 from models import Users, UserProfile
 from database import SessionLocal
-from schemas import UpdateUserProfileRequest, UserProfileResponse
+from schemas import UpdateUserProfileRequest, UserProfileResponse, UpdateLangaugeRequest
 from utils.utils import get_current_user
 from passlib.context import CryptContext
 
@@ -35,7 +35,6 @@ bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
 
-
 @router.get("/get_user", status_code=status.HTTP_200_OK)
 async def get_user(user: user_dependency, db: db_dependency):
     if user is None:
@@ -50,6 +49,24 @@ async def get_user(user: user_dependency, db: db_dependency):
         'phone_number': db_user.phone_number,
         'preferred_language': db_user.language_preference
     }
+
+@router.patch("/update_language_choice", status_code=status.HTTP_200_OK)
+async def update_language_choice(data: UpdateLangaugeRequest, user: user_dependency, db: db_dependency):
+     db_user = db.query(Users).filter(Users.id == user["id"]).first()
+     if not db_user:
+         raise HTTPException(status_code=401, detail="User Not Found!")
+     
+     db_user.language_preference = data.language_preference
+     db.commit()
+     db.refresh(db_user)
+     return {
+         "message": "Language preference updated successfully",
+         "language_preference": db_user.language_preference.value
+     }
+
+      
+
+
 
 
 @router.delete("/delete_user", status_code=status.HTTP_200_OK)

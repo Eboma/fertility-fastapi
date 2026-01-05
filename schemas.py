@@ -19,6 +19,8 @@ class CreateUserRequest(BaseModel):
 class UserVerify(BaseModel):
     email: str
 
+class UpdateLangaugeRequest(BaseModel):
+    language_preference: Optional[LanguageEnum] = None
 
 class UpdateUserProfileRequest(BaseModel):
     age: Optional[int] = None
