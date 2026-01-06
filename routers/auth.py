@@ -200,13 +200,13 @@ async def verify_otp_registration(
 
 @router.post("/token", response_model=Token)
 async def login_in_token(
-    data: LoginRequest,
+    # data: LoginRequest,
     db: db_dependency,
-    # form_data: OAuth2PasswordRequestForm = Depends(),
+    form_data: OAuth2PasswordRequestForm = Depends(),
 
 ):
-    user = authenticate_user(data.email, data.password, db)
-    # user = authenticate_user(form_data.username, form_data.password, db)
+    # user = authenticate_user(data.email, data.password, db)
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -241,7 +241,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: db_dependency):
     return {"message": "Password reset email sent successfully."}
 
 
-@router.post("/reset-password", status_code=status.HTTP_200_OK)
+@router.post("/#/reset_password", status_code=status.HTTP_200_OK)
 def reset_password(data: ResetPasswordRequest, db: db_dependency):
     reset_record = db.query(PasswordResetToken).filter(
         PasswordResetToken.token == data.token,
@@ -265,7 +265,6 @@ def reset_password(data: ResetPasswordRequest, db: db_dependency):
 
 
 # Logout endpoint (placeholder)
-
 @router.post("/logout")
 async def logout_user():
     return {"message": "Logout successful"}
