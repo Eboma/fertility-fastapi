@@ -230,6 +230,9 @@ async def forgot_password(data: ForgotPasswordRequest, db: db_dependency):
     user = db.query(Users).filter(Users.email == data.email).first()
     if not user:
        return {"message": "If the email exists, a reset link has been sent."}
+   
+   
+    #delete existing tokens
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user.id ).delete()
 
     token = str(uuid.uuid4())
