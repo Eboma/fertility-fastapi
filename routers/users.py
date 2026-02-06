@@ -76,12 +76,9 @@ async def delete_user(user: user_dependency, db: db_dependency):
      if not db_user:
          raise HTTPException(status_code=401, detail="User Not Found!")
      db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
-     db.query(UserProfile).filter(
-         UserProfile.user_id == user_id).delete(synchronize_session=False)
-     
-        
-      db.delete(db_user)
-      db.commit()
+     db.query(UserProfile).filter(UserProfile.user_id == user_id).delete(synchronize_session=False)
+     db.delete(db_user)
+     db.commit()
      return {"message": "User deleted"}
 
 
