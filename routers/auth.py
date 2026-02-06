@@ -241,7 +241,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: db_dependency):
     db.add(reset_token)
     db.commit()
     RESET_PASSWORD_URL = (
-        f"https://fertipath.onrender.com/#/reset_password?token={token}"
+        f"https://teamnexuss.netlify.app/#/reset_password?token={token}"
     )
     send_password_reset_email(
         to_email=user.email, reset_link=RESET_PASSWORD_URL)
