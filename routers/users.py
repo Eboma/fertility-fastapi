@@ -79,8 +79,8 @@ async def delete_user(user: user_dependency, db: db_dependency):
          UserProfile.user_id == user_id).first()
      if user_profile:
          db.delete(user_profile)
-     db.delete(db_user)
-     db.commit()
+         db.delete(db_user)
+         db.commit()
      return {"message": "User deleted"}
 
 
