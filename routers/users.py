@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 from starlette import status
-from models import Users, UserProfile, PasswordResetToken
+from models import Users, UserProfile,PasswordResetToken
 from database import SessionLocal
 from schemas import UpdateUserProfileRequest, UserProfileResponse, UpdateLangaugeRequest
 from utils.utils import get_current_user
